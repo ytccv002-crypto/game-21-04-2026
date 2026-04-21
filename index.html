@@ -377,13 +377,21 @@
             tPiece = getTPiece(); tNextPiece = getTPiece();
             drawTNext();
             tLastDrop = Date.now();
-            tInterval = setInterval(updateTetris, 16);
+            if(tInterval)cancelAnimationFrame(tInterval);
+            tInterval = requestAnimationFrame(loopTetris);
             document.onkeydown = tetrisKey;
         }
         
         function stopTetris() {
-            clearInterval(tInterval);
+            cancelAnimationFrame(tInterval);
             document.onkeydown = null;
+        }
+        
+        function loopTetris(time) {
+            if(tGameOver)return;
+            if(Date.now()-tLastDrop>tDropSpeed)tDrop();
+            drawT();
+            tInterval = requestAnimationFrame(loopTetris);
         }
         
         function getTPiece() {
@@ -475,21 +483,32 @@
         const snakeCtx = snakeCanvas.getContext('2d');
         
         const S_SIZE=20, S_GRID=20;
-        let sSnake=[{x:10,y:10}], sFood={x:15,y:10}, sDir={x:1,y:0}, sScore=0, sHighScore=localStorage.getItem('snakeHS')||0, sGameOver=false, sInterval;
+        let sSnake=[{x:10,y:10}], sFood={x:15,y:10}, sDir={x:1,y:0}, sScore=0, sHighScore=localStorage.getItem('snakeHS')||0, sGameOver=false, sLastTime=0;
         
         document.getElementById('snakeHighScore').textContent=sHighScore;
+        
+        const S_SPEED = 100;
+        let sLoopId;
         
         function initSnake(){
             sSnake=[{x:10,y:10}]; sFood={x:15,y:10}; sDir={x:1,y:0}; sScore=0; sGameOver=false;
             document.getElementById('snakeScore').textContent=0;
             document.getElementById('snakeGameOver').classList.remove('show');
-            sInterval=setInterval(updateSnake,100);
+            if(sLoopId)cancelAnimationFrame(sLoopId);
+            sLastTime=0;
+            loopSnake(0);
             document.onkeydown=snakeKey;
         }
         
         function stopSnake(){
-            clearInterval(sInterval);
+            cancelAnimationFrame(sLoopId);
             document.onkeydown=null;
+        }
+        
+        function loopSnake(time){
+            if(sGameOver)return;
+            if(time-sLastTime>S_SPEED){updateSnake();sLastTime=time;}
+            sLoopId=requestAnimationFrame(loopSnake);
         }
         
         function snakeKey(e){
@@ -535,18 +554,23 @@
         
         function initArkanoid(){
             aBricks=[]; for(let r=0;r<5;r++)for(let c=0;c<8;c++)aBricks.push({x:c*60+10,y:r*20+30,w:50,h:15,c:['#ff4757','#ffa502','#2ed573','#1e90ff','#a55eea'][r]});
-            aPaddle={x:200,y:380}; aBall={x:240,y:370,vx:3,vy:-3}; aScore=0; aLives=3; aRunning=false;
+            aPaddle={x:200,y:380}; aBall={x:240,y:370,vx:5,vy:-5}; aScore=0; aLives=3; aRunning=false;
             document.getElementById('arkanoidScore').textContent=0;
             document.getElementById('arkanoidLives').textContent=3;
             document.getElementById('arkanoidGameOver').classList.remove('show');
-            aInterval=setInterval(updateArkanoid,16);
+            aInterval=requestAnimationFrame(loopArkanoid);
             document.onkeydown=aKey;
             drawA();
         }
         
         function stopArkanoid(){
-            clearInterval(aInterval);
+            cancelAnimationFrame(aInterval);
             document.onkeydown=null;
+        }
+        
+        function loopArkanoid(){
+            updateArkanoid();
+            if(!aLives<=0)aInterval=requestAnimationFrame(loopArkanoid);
         }
         
         function aKey(e){
@@ -569,7 +593,7 @@
                     document.getElementById('arkanoidFinalScore').textContent=aScore;
                     document.getElementById('arkanoidGameOver').classList.add('show'); return;
                 }
-                aPaddle.x=200; aBall.x=240;aBall.y=370; aBall.vx=3;aBall.vy=-3; aRunning=false;
+                aPaddle.x=200; aBall.x=240;aBall.y=370; aBall.vx=5;aBall.vy=-5; aRunning=false;
             }
             if(aBall.y+aBall.vy>=aPaddle.y-A_BALLR&&aBall.y<=aPaddle.y+A_PH&&aBall.x>=aPaddle.x&&aBall.x<=aPaddle.x+A_PW){
                 aBall.vy=-Math.abs(aBall.vy); aBall.vx+=(aBall.x-(aPaddle.x+A_PW/2))/10;
