@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тетрис</title>
+    <title>Ретро Игры</title>
     <style>
         * {
             margin: 0;
@@ -12,13 +12,67 @@
         }
         body {
             background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
             font-family: 'Segoe UI', sans-serif;
             color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: flex;
+        }
+        
+        /* МЕНЮ */
+        #menu {
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+        #menu h1 {
+            font-size: 56px;
+            background: linear-gradient(135deg, #00d9ff, #a55eea, #ff4757);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(0, 217, 255, 0.3);
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .game-card {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(145deg, #16213e, #0f0f1a);
+            border: 3px solid #4a4a6a;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: #00d9ff;
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+        }
+        .game-card .icon {
+            font-size: 48px;
+        }
+        .game-card span {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* ОБЩИЕ СТИЛИ ИГР */
         .game-container {
             display: flex;
             gap: 30px;
@@ -30,7 +84,7 @@
             padding: 4px;
             background: #0f0f1a;
         }
-        #gameCanvas {
+        canvas {
             display: block;
             background: #16162a;
             border-radius: 4px;
@@ -60,36 +114,63 @@
             font-weight: bold;
             color: #00d9ff;
         }
-        #nextCanvas {
-            background: #16162a;
-            border-radius: 4px;
-            margin: 0 auto;
-        }
-        .controls {
+        .controls-box {
             background: #16213e;
             border: 2px solid #4a4a6a;
             border-radius: 8px;
             padding: 15px;
         }
-        .controls h3 {
+        .controls-box h3 {
             font-size: 14px;
             color: #8b8ba7;
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .controls p {
+        .controls-box p {
             font-size: 12px;
             color: #6b6b8d;
             margin: 5px 0;
         }
-        .controls kbd {
+        .controls-box kbd {
             background: #0f0f1a;
             padding: 2px 6px;
             border-radius: 3px;
             border: 1px solid #4a4a6a;
             font-family: monospace;
         }
+        .back-btn {
+            background: #ff4757;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: #ff6b81;
+            transform: scale(1.05);
+        }
+        
+        /* ТЕТРИС */
+        #tetris .info-box:nth-child(2) canvas {
+            width: 120px;
+            height: 120px;
+        }
+        
+        /* ЗМЕЙКА */
+        #snake .game-wrapper {
+            padding: 0;
+        }
+        
+        /* АРКАНОИД */
+        #arkanoid .game-wrapper {
+            border-color: #2ed573;
+        }
+        
         .game-over {
             position: fixed;
             top: 0;
@@ -133,319 +214,386 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="game-wrapper">
-            <canvas id="gameCanvas" width="300" height="600"></canvas>
-        </div>
-        <div class="sidebar">
-            <div class="info-box">
-                <h3>Счёт</h3>
-                <div class="value" id="score">0</div>
+    <!-- МЕНЮ -->
+    <div id="menu" class="screen active">
+        <h1>Ретро Игры</h1>
+        <div class="games-grid">
+            <div class="game-card" onclick="startGame('tetris')">
+                <div class="icon">🧱</div>
+                <span>Тетрис</span>
             </div>
-            <div class="info-box">
-                <h3>Рекорд</h3>
-                <div class="value" id="highScore">0</div>
+            <div class="game-card" onclick="startGame('snake')">
+                <div class="icon">🐍</div>
+                <span>Змейка</span>
             </div>
-            <div class="info-box">
-                <h3>Следующая</h3>
-                <canvas id="nextCanvas" width="120" height="120"></canvas>
-            </div>
-            <div class="controls">
-                <h3>Управление</h3>
-                <p><kbd>←</kbd> <kbd>→</kbd> Движение</p>
-                <p><kbd>↓</kbd> Ускорить</p>
-                <p><kbd>↑</kbd> Поворот</p>
-                <p><kbd>Space</kbd> Сброс</p>
+            <div class="game-card" onclick="startGame('arkanoid')">
+                <div class="icon">🪨</div>
+                <span>Арканоид</span>
             </div>
         </div>
     </div>
 
-    <div class="game-over" id="gameOver">
-        <h1>ИГРА ОКОНЧЕНА</h1>
-        <p>Ваш счёт: <span id="finalScore">0</span></p>
-        <button onclick="restartGame()">ИГРАТЬ СНОВА</button>
+    <!-- ТЕТРИС -->
+    <div id="tetris" class="screen">
+        <div class="game-container">
+            <div class="game-wrapper">
+                <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+            </div>
+            <div class="sidebar">
+                <button class="back-btn" onclick="goBack()">← Назад</button>
+                <div class="info-box">
+                    <h3>Счёт</h3>
+                    <div class="value" id="tetrisScore">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>Рекорд</h3>
+                    <div class="value" id="tetrisHighScore">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>Следующая</h3>
+                    <canvas id="nextCanvas" width="120" height="120"></canvas>
+                </div>
+                <div class="controls-box">
+                    <h3>Управление</h3>
+                    <p><kbd>←</kbd> <kbd>→</kbd> Движение</p>
+                    <p><kbd>↓</kbd> Ускорить</p>
+                    <p><kbd>↑</kbd> Поворот</p>
+                </div>
+            </div>
+        </div>
+        <div class="game-over" id="tetrisGameOver">
+            <h1>ИГРА ОКОНЧЕНА</h1>
+            <p>Ваш счёт: <span id="tetrisFinalScore">0</span></p>
+            <button onclick="restartTetris()">ИГРАТЬ СНОВА</button>
+        </div>
+    </div>
+
+    <!-- ЗМЕЙКА -->
+    <div id="snake" class="screen">
+        <div class="game-container">
+            <div class="game-wrapper">
+                <canvas id="snakeCanvas" width="400" height="400"></canvas>
+            </div>
+            <div class="sidebar">
+                <button class="back-btn" onclick="goBack()">← Назад</button>
+                <div class="info-box">
+                    <h3>Счёт</h3>
+                    <div class="value" id="snakeScore">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>Рекорд</h3>
+                    <div class="value" id="snakeHighScore">0</div>
+                </div>
+                <div class="controls-box">
+                    <h3>Управление</h3>
+                    <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> Направление</p>
+                </div>
+            </div>
+        </div>
+        <div class="game-over" id="snakeGameOver">
+            <h1>ИГРА ОКОНЧЕНА</h1>
+            <p>Ваш счёт: <span id="snakeFinalScore">0</span></p>
+            <button onclick="restartSnake()">ИГРАТЬ СНОВА</button>
+        </div>
+    </div>
+
+    <!-- АРКАНОИД -->
+    <div id="arkanoid" class="screen">
+        <div class="game-container">
+            <div class="game-wrapper">
+                <canvas id="arkanoidCanvas" width="480" height="400"></canvas>
+            </div>
+            <div class="sidebar">
+                <button class="back-btn" onclick="goBack()">← Назад</button>
+                <div class="info-box">
+                    <h3>Счёт</h3>
+                    <div class="value" id="arkanoidScore">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>Рекорд</h3>
+                    <div class="value" id="arkanoidHighScore">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>Жизни</h3>
+                    <div class="value" id="arkanoidLives">3</div>
+                </div>
+                <div class="controls-box">
+                    <h3>Управление</h3>
+                    <p><kbd>←</kbd> <kbd>→</kbd> Платформа</p>
+                    <p><kbd>Space</kbd> Старт/Пауза</p>
+                </div>
+            </div>
+        </div>
+        <div class="game-over" id="arkanoidGameOver">
+            <h1>ИГРА ОКОНЧЕНА</h1>
+            <p>Ваш счёт: <span id="arkanoidFinalScore">0</span></p>
+            <button onclick="restartArkanoid()">ИГРАТЬ СНОВА</button>
+        </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        let currentGame = null;
+        
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        
+        function goBack() {
+            if (currentGame === 'tetris') stopTetris();
+            else if (currentGame === 'snake') stopSnake();
+            else if (currentGame === 'arkanoid') stopArkanoid();
+            currentGame = null;
+            showScreen('menu');
+        }
+        
+        function startGame(game) {
+            currentGame = game;
+            showScreen(game);
+            if (game === 'tetris') initTetris();
+            else if (game === 'snake') initSnake();
+            else if (game === 'arkanoid') initArkanoid();
+        }
+
+        /* ========== ТЕТРИС ========== */
+        const tetrisCanvas = document.getElementById('tetrisCanvas');
+        const tetrisCtx = tetrisCanvas.getContext('2d');
         const nextCanvas = document.getElementById('nextCanvas');
         const nextCtx = nextCanvas.getContext('2d');
         
-        const COLS = 10;
-        const ROWS = 20;
-        const BLOCK_SIZE = 30;
+        const T_COLS = 10, T_ROWS = 20, T_BLOCK = 30;
+        const T_COLORS = [null, '#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#a55eea', '#00d9ff', '#ff6b81'];
+        const T_SHAPES = [[], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,0],[3,3,3]], [[4,4,0],[0,4,4]], [[0,5,5],[5,5,0]], [[6,6,6],[6,0,0]], [[7,7,7],[0,0,7]]];
         
-        const COLORS = [
-            null,
-            '#ff4757',
-            '#2ed573',
-            '#1e90ff',
-            '#ffa502',
-            '#a55eea',
-            '#00d9ff',
-            '#ff6b81'
-        ];
+        let tBoard = [], tPiece = null, tNextPiece = null, tScore = 0, tHighScore = localStorage.getItem('tetrisHS')||0, tGameOver = false, tInterval, tLastDrop, tDropSpeed = 1000;
         
-        const SHAPES = [
-            [],
-            [[1, 1, 1, 1]],
-            [[2, 2], [2, 2]],
-            [[0, 3, 0], [3, 3, 3]],
-            [[4, 4, 0], [0, 4, 4]],
-            [[0, 5, 5], [5, 5, 0]],
-            [[6, 6, 6], [6, 0, 0]],
-            [[7, 7, 7], [0, 0, 7]]
-        ];
+        document.getElementById('tetrisHighScore').textContent = tHighScore;
         
-        let board = [];
-        let currentPiece = null;
-        let nextPiece = null;
-        let score = 0;
-        let highScore = localStorage.getItem('tetrisHighScore') || 0;
-        let gameOver = false;
-        let dropInterval = 1000;
-        let lastDrop = 0;
-        let animationId = null;
+        function initTetris() {
+            tBoard = Array.from({length: T_ROWS}, () => Array(T_COLS).fill(0));
+            tScore = 0; tDropSpeed = 1000; tGameOver = false;
+            document.getElementById('tetrisScore').textContent = 0;
+            document.getElementById('tetrisGameOver').classList.remove('show');
+            tPiece = getTPiece(); tNextPiece = getTPiece();
+            drawTNext();
+            tLastDrop = Date.now();
+            tInterval = setInterval(updateTetris, 16);
+            document.onkeydown = tetrisKey;
+        }
         
-        document.getElementById('highScore').textContent = highScore;
+        function stopTetris() {
+            clearInterval(tInterval);
+            document.onkeydown = null;
+        }
         
-        function createBoard() {
-            board = [];
-            for (let r = 0; r < ROWS; r++) {
-                board.push(new Array(COLS).fill(0));
+        function getTPiece() {
+            const type = Math.floor(Math.random()*7)+1;
+            return {shape: T_SHAPES[type].map(r=>[...r]), x: Math.floor(T_COLS/2)-Math.floor(T_SHAPES[type][0].length/2), y: 0};
+        }
+        
+        function drawTBlock(x,y,c,size=T_BLOCK) {
+            tetrisCtx.fillStyle = T_COLORS[c];
+            tetrisCtx.fillRect(x*size,y*size,size,size);
+            tetrisCtx.strokeStyle='#0a0a15';
+            tetrisCtx.lineWidth=2;
+            tetrisCtx.strokeRect(x*size,y*size,size,size);
+            tetrisCtx.fillStyle='rgba(255,255,255,0.3)';
+            tetrisCtx.fillRect(x*size+2,y*size+2,size-4,4);
+        }
+        
+        function drawT() {
+            tetrisCtx.fillStyle='#16162a';
+            tetrisCtx.fillRect(0,0,300,600);
+            for(let r=0;r<T_ROWS;r++)for(let c=0;c<T_COLS;c++)if(tBoard[r][c])drawTBlock(c,r,tBoard[r][c]);
+            if(tPiece) tPiece.shape.forEach((row,r)=>row.forEach((v,c)=>v&&drawTBlock(tPiece.x+c,tPiece.y+r,v)));
+        }
+        
+        function drawTNext() {
+            nextCtx.fillStyle='#16162a';
+            nextCtx.fillRect(0,0,120,120);
+            if(tNextPiece) {
+                const bs=25;
+                tNextPiece.shape.forEach((row,r)=>row.forEach((v,c)=>v&&drawTBlock(c+1,r+1,v,bs)));
             }
         }
         
-        function drawBlock(ctx, x, y, color, size = BLOCK_SIZE) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x * size, y * size, size, size);
-            ctx.strokeStyle = '#0a0a15';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x * size, y * size, size, size);
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(x * size + 2, y * size + 2, size - 4, 4);
+        function tCollide() {
+            return tPiece.shape.some((row,r)=>row.some((v,c)=>v&&(tPiece.x+c<0||tPiece.x+c>=T_COLS||tPiece.y+r>=T_ROWS||(tPiece.y+r>=0&&tBoard[tPiece.y+r][tPiece.x+c]))));
         }
         
-        function draw() {
-            ctx.fillStyle = '#16162a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (board[r][c]) {
-                        drawBlock(ctx, c, r, COLORS[board[r][c]]);
-                    }
+        function tMerge() {
+            tPiece.shape.forEach((row,r)=>row.forEach((v,c)=>v&&tBoard[tPiece.y+r]&&(tBoard[tPiece.y+r][tPiece.x+c]=v)));
+        }
+        
+        function tRotate() {
+            const n = tPiece.shape.length, old = tPiece.shape.map(r=>[...r]);
+            tPiece.shape = tPiece.shape[0].map((_,i)=>tPiece.shape.map(r=>r[i]).reverse());
+            let off=1; while(tCollide()){tPiece.x+=off; off=-(off+(off>0?1:-1)); if(off>10){tPiece.shape=old; return;}}
+        }
+        
+        function tSweep() {
+            let lines=0;
+            for(let r=T_ROWS-1;r>=0;r--){
+                if(tBoard[r].every(v=>v)){
+                    tBoard.splice(r,1);
+                    tBoard.unshift(Array(T_COLS).fill(0));
+                    r++; lines++;
                 }
             }
-            
-            if (currentPiece) {
-                currentPiece.shape.forEach((row, r) => {
-                    row.forEach((val, c) => {
-                        if (val) {
-                            drawBlock(ctx, currentPiece.x + c, currentPiece.y + r, COLORS[val]);
-                        }
-                    });
-                });
+            if(lines){
+                tScore+=[0,100,300,500,800][lines]||1200;
+                document.getElementById('tetrisScore').textContent=tScore;
+                if(tScore>tHighScore){tHighScore=tScore; localStorage.setItem('tetrisHS',tHighScore); document.getElementById('tetrisHighScore').textContent=tHighScore;}
+                tDropSpeed=Math.max(100,1000-tScore*0.5);
             }
         }
         
-        function drawNext() {
-            nextCtx.fillStyle = '#16162a';
-            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-            
-            if (nextPiece) {
-                const blockSize = 25;
-                const offsetX = (nextCanvas.width - nextPiece.shape[0].length * blockSize) / 2 / blockSize;
-                const offsetY = (nextCanvas.height - nextPiece.shape.length * blockSize) / 2 / blockSize;
-                
-                nextPiece.shape.forEach((row, r) => {
-                    row.forEach((val, c) => {
-                        if (val) {
-                            drawBlock(nextCtx, c + 1, r + 1, COLORS[val], blockSize);
-                        }
-                    });
-                });
+        function tDrop() {
+            tPiece.y++;
+            if(tCollide()){tPiece.y--; tMerge(); tSweep(); tPiece=tNextPiece; tNextPiece=getTPiece(); drawTNext(); if(tCollide()){tGameOver=true; document.getElementById('tetrisFinalScore').textContent=tScore; document.getElementById('tetrisGameOver').classList.add('show');}}
+            tLastDrop=Date.now();
+        }
+        
+        function updateTetris() {
+            if(tGameOver)return;
+            if(Date.now()-tLastDrop>tDropSpeed)tDrop();
+            drawT();
+        }
+        
+        function tetrisKey(e){
+            if(tGameOver)return;
+            if(e.key==='ArrowLeft'){tPiece.x--; if(tCollide())tPiece.x++;}
+            if(e.key==='ArrowRight'){tPiece.x++; if(tCollide())tPiece.x--;}
+            if(e.key==='ArrowDown')tDrop();
+            if(e.key==='ArrowUp')tRotate();
+        }
+        
+        function restartTetris(){initTetris();}
+
+        /* ========== ЗМЕЙКА ========== */
+        const snakeCanvas = document.getElementById('snakeCanvas');
+        const snakeCtx = snakeCanvas.getContext('2d');
+        
+        const S_SIZE=20, S_GRID=20;
+        let sSnake=[{x:10,y:10}], sFood={x:15,y:10}, sDir={x:1,y:0}, sScore=0, sHighScore=localStorage.getItem('snakeHS')||0, sGameOver=false, sInterval;
+        
+        document.getElementById('snakeHighScore').textContent=sHighScore;
+        
+        function initSnake(){
+            sSnake=[{x:10,y:10}]; sFood={x:15,y:10}; sDir={x:1,y:0}; sScore=0; sGameOver=false;
+            document.getElementById('snakeScore').textContent=0;
+            document.getElementById('snakeGameOver').classList.remove('show');
+            sInterval=setInterval(updateSnake,100);
+            document.onkeydown=snakeKey;
+        }
+        
+        function stopSnake(){
+            clearInterval(sInterval);
+            document.onkeydown=null;
+        }
+        
+        function snakeKey(e){
+            if(sGameOver)return;
+            const k={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}};
+            if(k[e.key]&&!(sDir.x===-k[e.key].x&&sDir.y===-k[e.key].y))sDir=k[e.key];
+        }
+        
+        function updateSnake(){
+            if(sGameOver)return;
+            const head={x:sSnake[0].x+sDir.x,y:sSnake[0].y+sDir.y};
+            if(head.x<0||head.x>=S_GRID||head.y<0||head.y>=S_GRID||sSnake.some(p=>p.x===head.x&&p.y===head.y)){
+                sGameOver=true; document.getElementById('snakeFinalScore').textContent=sScore; document.getElementById('snakeGameOver').classList.add('show'); return;
             }
+            sSnake.unshift(head);
+            if(head.x===sFood.x&&head.y===sFood.y){
+                sScore+=10; document.getElementById('snakeScore').textContent=sScore;
+                if(sScore>sHighScore){sHighScore=sScore; localStorage.setItem('snakeHS',sHighScore); document.getElementById('snakeHighScore').textContent=sHighScore;}
+                do{sFood={x:Math.floor(Math.random()*S_GRID),y:Math.floor(Math.random()*S_GRID)}}while(sSnake.some(p=>p.x===sFood.x&&p.y===sFood.y));
+            }else sSnake.pop();
+            drawS();
         }
         
-        function getRandomPiece() {
-            const type = Math.floor(Math.random() * 7) + 1;
-            const shape = SHAPES[type].map(row => [...row]);
-            return {
-                shape: shape,
-                x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2),
-                y: 0
-            };
+        function drawS(){
+            snakeCtx.fillStyle='#16162a';
+            snakeCtx.fillRect(0,0,400,400);
+            snakeCtx.fillStyle='#2ed573';
+            sSnake.forEach((p,i)=>{snakeCtx.fillRect(p.x*S_SIZE+1,p.y*S_SIZE+1,S_SIZE-2,S_SIZE-2);});
+            snakeCtx.fillStyle='#ff4757';
+            snakeCtx.fillRect(sFood.x*S_SIZE+2,sFood.y*S_SIZE+2,S_SIZE-4,S_SIZE-4);
         }
         
-        function collide(arena, player) {
-            const [m, o] = [player.shape, player];
-            for (let r = 0; r < m.length; r++) {
-                for (let c = 0; c < m[r].length; c++) {
-                    if (m[r][c] !== 0) {
-                        const newX = o.x + c;
-                        const newY = o.y + r;
-                        if (newX < 0 || newX >= COLS || newY >= ROWS || (newY >= 0 && board[newY][newX])) {
-                            return true;
-                        }
-                    }
+        function restartSnake(){initSnake();}
+
+        /* ========== АРКАНОИД ========== */
+        const arkanoidCanvas = document.getElementById('arkanoidCanvas');
+        const aCtx = arkanoidCanvas.getContext('2d');
+        
+        const A_WIDTH=480, A_HEIGHT=400, A_PW=80, A_PH=12, A_BALLR=6;
+        let aPaddle={x:200,y:380}, aBall={x:240,y:370,vx:3,vy:-3}, aBricks=[], aScore=0, aHighScore=localStorage.getItem('arkanoidHS')||0, aLives=3, aRunning=false, aInterval;
+        
+        document.getElementById('arkanoidHighScore').textContent=aHighScore;
+        
+        function initArkanoid(){
+            aBricks=[]; for(let r=0;r<5;r++)for(let c=0;c<8;c++)aBricks.push({x:c*60+10,y:r*20+30,w:50,h:15,c:['#ff4757','#ffa502','#2ed573','#1e90ff','#a55eea'][r]});
+            aPaddle={x:200,y:380}; aBall={x:240,y:370,vx:3,vy:-3}; aScore=0; aLives=3; aRunning=false;
+            document.getElementById('arkanoidScore').textContent=0;
+            document.getElementById('arkanoidLives').textContent=3;
+            document.getElementById('arkanoidGameOver').classList.remove('show');
+            aInterval=setInterval(updateArkanoid,16);
+            document.onkeydown=aKey;
+            drawA();
+        }
+        
+        function stopArkanoid(){
+            clearInterval(aInterval);
+            document.onkeydown=null;
+        }
+        
+        function aKey(e){
+            if(e.key===' '){aRunning=!aRunning; e.preventDefault();}
+            if(!aRunning)return;
+            if(e.key==='ArrowLeft')aPaddle.x=Math.max(0,aPaddle.x-8);
+            if(e.key==='ArrowRight')aPaddle.x=Math.min(A_WIDTH-A_PW,aPaddle.x+8);
+        }
+        
+        function updateArkanoid(){
+            if(!aRunning||aBricks.length===0){
+                drawA(); return;
+            }
+            aBall.x+=aBall.vx; aBall.y+=aBall.vy;
+            if(aBall.x<=A_BALLR||aBall.x>=A_WIDTH-A_BALLR)aBall.vx=-aBall.vx;
+            if(aBall.y<=A_BALLR)aBall.vy=-aBall.vy;
+            if(aBall.y>=A_HEIGHT-A_BALLR){
+                aLives--; document.getElementById('arkanoidLives').textContent=aLives;
+                if(aLives<=0){
+                    document.getElementById('arkanoidFinalScore').textContent=aScore;
+                    document.getElementById('arkanoidGameOver').classList.add('show'); return;
                 }
+                aPaddle.x=200; aBall.x=240;aBall.y=370; aBall.vx=3;aBall.vy=-3; aRunning=false;
             }
-            return false;
-        }
-        
-        function merge(arena, player) {
-            player.shape.forEach((row, r) => {
-                row.forEach((val, c) => {
-                    if (val) {
-                        const newY = player.y + r;
-                        const newX = player.x + c;
-                        if (newY >= 0) {
-                            board[newY][newX] = val;
-                        }
-                    }
-                });
+            if(aBall.y+aBall.vy>=aPaddle.y-A_BALLR&&aBall.y<=aPaddle.y+A_PH&&aBall.x>=aPaddle.x&&aBall.x<=aPaddle.x+A_PW){
+                aBall.vy=-Math.abs(aBall.vy); aBall.vx+=(aBall.x-(aPaddle.x+A_PW/2))/10;
+            }
+            aBricks=aBricks.filter(b=>{
+                if(aBall.x>=b.x&&aBall.x<=b.x+b.w&&aBall.y>=b.y&&aBall.y<=b.y+b.h){
+                    aBall.vy=-aBall.vy; aScore+=10; document.getElementById('arkanoidScore').textContent=aScore;
+                    if(aScore>aHighScore){aHighScore=aScore; localStorage.setItem('arkanoidHS',aHighScore); document.getElementById('arkanoidHighScore').textContent=aHighScore;}
+                    return false;
+                }return true;
             });
+            drawA();
         }
         
-        function rotate(matrix) {
-            const N = matrix.length;
-            const result = matrix.map((row, i) =>
-                row.map((val, j) => matrix[N - 1 - j][i])
-            );
-            return result;
+        function drawA(){
+            aCtx.fillStyle='#16162a';
+            aCtx.fillRect(0,0,A_WIDTH,A_HEIGHT);
+            aBricks.forEach(b=>{aCtx.fillStyle=b.c;aCtx.fillRect(b.x,b.y,b.w,b.h);});
+            aCtx.fillStyle='#00d9ff'; aCtx.fillRect(aPaddle.x,aPaddle.y,A_PW,A_PH);
+            aCtx.beginPath(); aCtx.arc(aBall.x,aBall.y,A_BALLR,0,Math.PI*2); aCtx.fillStyle='#fff'; aCtx.fill();
+            if(!aRunning){aCtx.fillStyle='rgba(255,255,255,0.7)';aCtx.font='20px sans-serif';aCtx.fillText('Нажми Пробел',170,200);}
         }
         
-        function playerRotate() {
-            const original = currentPiece.shape;
-            currentPiece.shape = rotate(currentPiece.shape);
-            
-            let offset = 1;
-            while (collide(board, currentPiece)) {
-                currentPiece.x += offset;
-                offset = -(offset + (offset > 0 ? 1 : -1));
-                if (offset > currentPiece.shape[0].length) {
-                    currentPiece.shape = original;
-                    currentPiece.x = currentPiece.originalX;
-                    return;
-                }
-            }
-            currentPiece.originalX = currentPiece.x;
-        }
-        
-        function sweep() {
-            let linesCleared = 0;
-            
-            outer: for (let r = ROWS - 1; r >= 0; r--) {
-                for (let c = 0; c < COLS; c++) {
-                    if (!board[r][c]) {
-                        continue outer;
-                    }
-                }
-                
-                const row = board.splice(r, 1)[0];
-                board.unshift(new Array(COLS).fill(0));
-                r++;
-                linesCleared++;
-            }
-            
-            if (linesCleared > 0) {
-                const points = [0, 100, 300, 500, 800];
-                score += points[linesCleared] || 1200;
-                document.getElementById('score').textContent = score;
-                
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem('tetrisHighScore', highScore);
-                    document.getElementById('highScore').textContent = highScore;
-                }
-                
-                dropInterval = Math.max(100, 1000 - score * 0.5);
-            }
-        }
-        
-        function playerDrop() {
-            currentPiece.y++;
-            if (collide(board, currentPiece)) {
-                currentPiece.y--;
-                merge(board, currentPiece);
-                sweep();
-                playerReset();
-            }
-            lastDrop = Date.now();
-        }
-        
-        function playerMove(dir) {
-            currentPiece.x += dir;
-            if (collide(board, currentPiece)) {
-                currentPiece.x -= dir;
-            }
-        }
-        
-        function playerReset() {
-            currentPiece = nextPiece || getRandomPiece();
-            nextPiece = getRandomPiece();
-            drawNext();
-            
-            currentPiece.originalX = currentPiece.x;
-            
-            if (collide(board, currentPiece)) {
-                gameOver = true;
-                document.getElementById('finalScore').textContent = score;
-                document.getElementById('gameOver').classList.add('show');
-            }
-        }
-        
-        function restartGame() {
-            gameOver = false;
-            score = 0;
-            dropInterval = 1000;
-            document.getElementById('score').textContent = score;
-            document.getElementById('gameOver').classList.remove('show');
-            createBoard();
-            playerReset();
-            update();
-        }
-        
-        function update(time = 0) {
-            if (gameOver) return;
-            
-            const deltaTime = time - lastDrop;
-            if (deltaTime > dropInterval) {
-                playerDrop();
-            }
-            
-            draw();
-            animationId = requestAnimationFrame(update);
-        }
-        
-        document.addEventListener('keydown', event => {
-            if (gameOver) return;
-            
-            switch (event.key) {
-                case 'ArrowLeft':
-                    playerMove(-1);
-                    break;
-                case 'ArrowRight':
-                    playerMove(1);
-                    break;
-                case 'ArrowDown':
-                    playerDrop();
-                    break;
-                case 'ArrowUp':
-                    playerRotate();
-                    break;
-                case ' ':
-                    restartGame();
-                    break;
-            }
-        });
-        
-        createBoard();
-        playerReset();
-        update();
+        function restartArkanoid(){initArkanoid();}
     </script>
 </body>
 </html>
